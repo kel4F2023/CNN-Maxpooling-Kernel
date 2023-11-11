@@ -4,17 +4,6 @@
 
 #include <immintrin.h>
 
-void print_simd(float * cptr, int size){
-  printf("\t[");
-  for (int i = 0; i != size; ++i){
-    if (i == size - 1)
-      printf("%.2f", cptr[i]);
-    else
-      printf("%.2f\t", cptr[i]);
-  }
-  printf("]\n");
-}
-
 
 void kernel // 
 (
@@ -26,38 +15,48 @@ void kernel //
     int         pool                // pooling size
 ) {
 
-    int num_blocks = k / 8;          //  number of blocks of 8 layers
+    int num_blocks = k / 32;          //  number of blocks of 32 layers
     int m_out = m / pool;            
-    int n_out = n / pool;            
+    int n_out = n / pool;
+    
+    float result[8];        
 
+    __m256 vi0, vi1, vi2, vi3;
+    __m256 vo0, vo1, vo2, vo3;
 
-    for (int block = 0; block < num_blocks; block++) { // within a 8 * m * n block 
+    for (int block = 0; block < num_blocks; block++) { // within a 8 * m * n block
 
-        for (int i = 0; i != m_out; ++i) {
+        for (int num_pools = 0; num_pools < m_out * n_out; num_pools++) {
 
-            for (int j = 0; j != n_out; ++j) {
-                
-                __m256 max_vector, current_vector;
+            for (int pool_idx = 0; pool_idx < pool * pool; ++pool_idx) {
 
-                 for (int x = 0; x < pool; x++) {
+                // actucal kernel: 4 simd vectors with 8 float values
+                if (pool_idx == 0){
 
-                    for (int y = 0; y < pool; y++) {
-
-                        if (x == 0 && y == 0){
-                            max_vector = _mm256_load_ps(&input[8 * (block * m * n + (i * pool + x) * n + j * pool + y)]);
-                        }
-                        else{
-                            current_vector = _mm256_load_ps(&input[8 * (block * m * n + (i * pool + x) * n + j * pool + y)]);
-                            max_vector = _mm256_max_ps(max_vector, current_vector);
-                        }
-
-                    }
+                    vo0 = _mm256_load_ps(&input[32 * (block * m * n + num_pools * pool * pool + pool_idx) + 0]);
+                    vo1 = _mm256_load_ps(&input[32 * (block * m * n + num_pools * pool * pool + pool_idx) + 8]);
+                    vo2 = _mm256_load_ps(&input[32 * (block * m * n + num_pools * pool * pool + pool_idx) + 16]);
+                    vo3 = _mm256_load_ps(&input[32 * (block * m * n + num_pools * pool * pool + pool_idx) + 24]);
 
                 }
+                else{
+                    vi0 = _mm256_load_ps(&input[32 * (block * m * n + num_pools * pool * pool + pool_idx) + 0]);
+                    vi1 = _mm256_load_ps(&input[32 * (block * m * n + num_pools * pool * pool + pool_idx) + 8]);
+                    vi2 = _mm256_load_ps(&input[32 * (block * m * n + num_pools * pool * pool + pool_idx) + 16]);
+                    vi3 = _mm256_load_ps(&input[32 * (block * m * n + num_pools * pool * pool + pool_idx) + 24]);
+                    
+                    vo0 = _mm256_max_ps(vo0, vi0);
+                    vo1 = _mm256_max_ps(vo1, vi1);
+                    vo2 = _mm256_max_ps(vo2, vi2);
+                    vo3 = _mm256_max_ps(vo3, vi3);
 
-                _mm256_store_ps(&output[8 * (block * m_out * n_out + i * n_out + j)], max_vector);
-            }
+                }
+            }     
+
+            _mm256_store_ps(&output[32 * (block * m_out * n_out + num_pools) + 0], vo0);
+            _mm256_store_ps(&output[32 * (block * m_out * n_out + num_pools) + 8], vo1);
+            _mm256_store_ps(&output[32 * (block * m_out * n_out + num_pools) + 16], vo2);
+            _mm256_store_ps(&output[32 * (block * m_out * n_out + num_pools) + 24], vo3);
         }
     }
-
 }

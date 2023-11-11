@@ -11,7 +11,7 @@
 #define RUNS 1000
 #define MAX_FREQ 3.4
 #define BASE_FREQ 2.4
-#define VERBOSE 1
+#define VERBOSE 0
 #define CORRECTNESS_CHECK 1
 
 int main(){
@@ -21,10 +21,10 @@ int main(){
 
   unsigned long long t0, t1, sum;
 
-  int m = 4;      // m is the number of rows per layer 
-  int n = 4;      // n is the number of columns per layer 
-  int k = 8;      // k is the number of layers
-  int pool = 2;   // pool is the size of the pooling window
+  int m = 8;      // m is the number of rows per layer 
+  int n = 8;      // n is the number of columns per layer 
+  int k = 64;      // k is the number of layers
+  int pool = 4;   // pool is the size of the pooling window
 
   int z = m * n;  // z is the size of a layer (m * n)
 
@@ -56,15 +56,17 @@ int main(){
 
   if (VERBOSE) {
     printf("The input matrix is: \n");
-    print_3d_matrix(source, k, m, n);
+    // print_3d_matrix(source, k, m, n);
+    print_matrix(source, k, m*n);
     printf("\n");
   }
 
-  pack(pack_source, source, z, k);
+  pack(pack_source, source, m, n, k, pool);
 
   if (VERBOSE) {
     printf("The packed matrix is: \n");
-    print_3d_matrix(pack_source, m, n, k);
+    // print_3d_matrix(pack_source, m, n, k);
+    print_matrix(pack_source, m*n, k);
     printf("\n");
   }
 
@@ -73,7 +75,7 @@ int main(){
   if (VERBOSE) {
     printf("The packed output matrix is: \n");
     // print_3d_matrix(output, k, m/pool, n/pool);
-    print_matrix(pack_output, k*m*n/pool/pool/8, 8);
+    print_matrix(pack_output, k*m*n/pool/pool/32, 32);
     printf("\n");
   }
 
@@ -81,7 +83,8 @@ int main(){
 
   if (VERBOSE) {
     printf("The output matrix is: \n");
-    print_3d_matrix(output, k, m/pool, n/pool);
+    // print_3d_matrix(output, k, m/pool, n/pool);
+    print_matrix(output, k*m*n/pool/pool/32, 32);
     printf("\n");
   }
 
@@ -91,7 +94,8 @@ int main(){
 
     if (VERBOSE) {
       printf("The correct output matrix is: \n");
-      print_3d_matrix(output_check, k, m/pool, n/pool);
+      // print_3d_matrix(output_check, k, m/pool, n/pool);
+      print_matrix(output_check, k*m*n/pool/pool/32, 32);
       printf("\n");
     }
 

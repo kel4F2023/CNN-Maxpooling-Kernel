@@ -1,29 +1,50 @@
 /*
-    packing routines to reordering the data for SIMD usage
+    packing routines to reordering the data for SIMD usage based on pool size
 */
 
 #include <immintrin.h>
 
 void pack // naive packing routine
 (
-  float*     restrict pack_source, // result data
-  float*     restrict source,      // source data
-  int               z,             // size of a layer (m * n)
-  int               k              // number of layers
+    float*     restrict pack_source, // result data
+    float*     restrict source,      // source data
+    int               m,             // number of rows per layer
+    int               n,             // number of columns per layer
+    int               k,              // number of layers
+    int              pool           // size of the pooling window
 ){
 
-    int num_blocks = k / 8;
+    int num_blocks = k / 32;
+    int m_out = m / pool;
+    int n_out = n / pool;
+    int z = m * n;
 
     for (int block = 0; block < num_blocks; block++) { // within a 8 * Z block 
 
-        for (int i = 0; i != z; ++i) {
 
-            for (int j = 0; j != 8; ++j) {
+        // reorder to pooling-major ordering
+        for (int layer = 0; layer < 32; layer++) {
 
-                pack_source[block*z*8 + i*8 + j] = source[block*z*8 + j*z + i];
+            for (int i = 0; i != m_out; ++i) {
 
+                for (int j = 0; j != n_out; ++j) {
+
+                    for (int x = 0; x < pool; x++) {
+
+                        for (int y = 0; y < pool; y++) {
+
+                            int dest_idx = block*z*32 + layer + (i*n_out + j)*pool*pool*32 + x*pool*32 + y*32;
+                            int src_idx = block*z*32 + (i*pool + x)*n + j*pool + y + layer*z;
+                            // printf("dest_idx: %d, src_idx: %d\n", dest_idx, src_idx);
+                            pack_source[dest_idx] = source[src_idx];
+
+                        }
+
+                    }
+
+                }
             }
-            
+
         }
 
     }
@@ -35,15 +56,15 @@ void unpack ( // naive packing routine
     int               z,                  // size of a layer (m * n)
     int               k                   // number of layers
 ){
-    int num_blocks = k / 8;
+    int num_blocks = k / 32;
 
     for (int block = 0; block < num_blocks; block++) { // within a 8 * Z block 
 
         for (int i = 0; i != z; ++i) {
 
-            for (int j = 0; j != 8; ++j) {
+            for (int j = 0; j != 32; ++j) {
 
-                res[block*z*8 + j*z + i] = pack_res[block*z*8 + i*8 + j];
+                res[block*z*32 + j*z + i] = pack_res[block*z*32 + i*32 + j];
 
             }
             
