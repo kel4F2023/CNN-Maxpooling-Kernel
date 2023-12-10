@@ -8,8 +8,8 @@
 #include "pack.h"
 #include "utils.h"
 
-#define RUNS 1000
-#define MAX_FREQ 3.4
+#define RUNS 10000
+#define MAX_FREQ 2.9
 #define BASE_FREQ 2.4
 
 static __inline__ unsigned long long rdtsc(void) {

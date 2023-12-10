@@ -19,13 +19,13 @@ void kernel //
     int num_blocks = k / 32;          //  number of blocks of 32 layers
     int m_out = m / pool;            
     int n_out = n / pool;
-    
-    __m256 vi0, vi1, vi2, vi3;
-    __m256 vo0, vo1, vo2, vo3;
 
     for (int block = 0; block < num_blocks; block++) { // within a 8 * m * n block
 
         for (int num_pools = 0; num_pools < m_out * n_out; num_pools++) {
+
+            __m256 vi0, vi1, vi2, vi3;
+            __m256 vo0, vo1, vo2, vo3;
 
             for (int pool_idx = 0; pool_idx < pool * pool; ++pool_idx) {
 
@@ -100,3 +100,16 @@ void naive
         }
     }
 };
+
+__m256 my_load_ps(float* addr) {
+    return _mm256_load_ps(addr);
+}
+
+__m256 my_max_ps(__m256 a, __m256 b) {
+    return _mm256_max_ps(a, b);
+}
+
+void my_store_ps(float* addr, __m256 a) {
+    _mm256_store_ps(addr, a);
+    return;
+}
