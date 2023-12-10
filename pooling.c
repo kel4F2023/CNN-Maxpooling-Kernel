@@ -25,11 +25,16 @@ void kernel //
         for (int num_pools = 0; num_pools < m_out * n_out; num_pools++) {
 
             __m256 vi0, vi1, vi2, vi3;
-            __m256 vo0, vo1, vo2, vo3;
+            // __m256 vo0, vo1, vo2, vo3;
+            __m256 vo0 = _mm256_setzero_ps();
+            __m256 vo1 = _mm256_setzero_ps();
+            __m256 vo2 = _mm256_setzero_ps();
+            __m256 vo3 = _mm256_setzero_ps();
 
             for (int pool_idx = 0; pool_idx < pool * pool; ++pool_idx) {
 
                 // actucal kernel: 4 simd vectors with 8 float values
+                #ifdef OLD
                 if (pool_idx == 0){
 
                     vo0 = _mm256_load_ps(&input[32 * (block * m * n + num_pools * pool * pool + pool_idx) + 0]);
@@ -48,8 +53,18 @@ void kernel //
                     vo1 = _mm256_max_ps(vo1, vi1);
                     vo2 = _mm256_max_ps(vo2, vi2);
                     vo3 = _mm256_max_ps(vo3, vi3);
-
                 }
+                #else
+                vi0 = _mm256_load_ps(&input[32 * (block * m * n + num_pools * pool * pool + pool_idx) + 0]);
+                vi1 = _mm256_load_ps(&input[32 * (block * m * n + num_pools * pool * pool + pool_idx) + 8]);
+                vi2 = _mm256_load_ps(&input[32 * (block * m * n + num_pools * pool * pool + pool_idx) + 16]);
+                vi3 = _mm256_load_ps(&input[32 * (block * m * n + num_pools * pool * pool + pool_idx) + 24]);
+                
+                vo0 = _mm256_max_ps(vo0, vi0);
+                vo1 = _mm256_max_ps(vo1, vi1);
+                vo2 = _mm256_max_ps(vo2, vi2);
+                vo3 = _mm256_max_ps(vo3, vi3);
+                #endif
             }     
 
             _mm256_store_ps(&output[32 * (block * m_out * n_out + num_pools) + 0], vo0);
@@ -100,16 +115,3 @@ void naive
         }
     }
 };
-
-__m256 my_load_ps(float* addr) {
-    return _mm256_load_ps(addr);
-}
-
-__m256 my_max_ps(__m256 a, __m256 b) {
-    return _mm256_max_ps(a, b);
-}
-
-void my_store_ps(float* addr, __m256 a) {
-    _mm256_store_ps(addr, a);
-    return;
-}

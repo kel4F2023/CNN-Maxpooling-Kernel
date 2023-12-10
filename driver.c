@@ -11,7 +11,7 @@
 #define RUNS 1000
 #define MAX_FREQ 3.4
 #define BASE_FREQ 2.4
-#define VERBOSE 0
+#define VERBOSE 1
 #define CORRECTNESS_CHECK 1
 
 static __inline__ unsigned long long rdtsc(void) {
@@ -37,7 +37,7 @@ int main(int argc, char** argv){
   int pool = 2;   // pool is the size of the pooling window
 
   int z = m * n;  // z is the size of a layer (m * n)
-  int print_processor = 1; //who prints their data.
+  int print_processor = 0; //who prints their data.
 
   if (VERBOSE && world_rank == print_processor) {
     printf("\n\n = = = = = = VERBOSE = = processor %d = = = = \n\n", world_rank);

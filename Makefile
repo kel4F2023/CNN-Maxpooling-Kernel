@@ -8,6 +8,7 @@ HEADERS = pack.c pooling.c utils.c
 compile: $(OBJS)
 	$(CC) $(CFLAGS) driver.c $(HEADERS) -o driver.x -march=native
 	$(CC) $(CFLAGS) experiment.c  $(HEADERS) -o experiment.x -march=native
+	$(CC) $(CFLAGS) experiment.c  $(HEADERS) -o mid-experiment.x -march=native -D OLD
 	$(CC) $(CFLAGS) perfmance.c  $(HEADERS) -o perfmance.x -march=native
 
 
@@ -18,12 +19,12 @@ test:
 	mpiexec -n 1 ./driver.x
 
 perf:
-	perf stat ./perfmance.x 256
-	
-flamegraph:
-	perf record -g  ./perfmance.x 256
-	perf script | ../FlameGraph/stackcollapse-perf.pl > out.perf-folded
-	../FlameGraph/flamegraph.pl out.perf-folded > mygraph.svg
+	perf stat ./perfmance.x 224
+
+
+data:
+	./experiment.x | sed '1d' >> data/final-data.tsv
+	./mid-experiment.x | sed '1d' >> data/mid-data.tsv
 
 clean:
 	rm -f *.x *~ *.o
