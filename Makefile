@@ -10,6 +10,7 @@ compile: $(OBJS)
 	$(CC) $(CFLAGS) experiment.c  $(HEADERS) -o experiment.x -march=native
 	$(CC) $(CFLAGS) experiment.c  $(HEADERS) -o mid-experiment.x -march=native -D OLD
 	$(CC) $(CFLAGS) perfmance.c  $(HEADERS) -o perfmance.x -march=native
+	$(CC) $(CFLAGS) perfmance.c  $(HEADERS) -o mid-perfmance.x -march=native -D OLD
 
 
 run:
@@ -19,12 +20,20 @@ test:
 	mpiexec -n 1 ./driver.x
 
 perf:
-	perf stat ./perfmance.x 224
+	perf stat ./perfmance.x 192
+	perf stat ./mid-perfmance.x 192
+
 
 
 data:
 	./experiment.x | sed '1d' >> data/final-data.tsv
 	./mid-experiment.x | sed '1d' >> data/mid-data.tsv
+
+init-data:
+	rm -f data/final-data.tsv
+	rm -f data/mid-data.tsv
+	./experiment.x >> data/final-data.tsv
+	./mid-experiment.x >> data/mid-data.tsv
 
 clean:
 	rm -f *.x *~ *.o
