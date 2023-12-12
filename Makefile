@@ -9,8 +9,8 @@ compile: $(OBJS)
 	$(CC) $(CFLAGS) driver.c $(HEADERS) -o driver.x -march=native
 	$(CC) $(CFLAGS) experiment.c  $(HEADERS) -o experiment.x -march=native
 	$(CC) $(CFLAGS) experiment.c  $(HEADERS) -o mid-experiment.x -march=native -D OLD
-	$(CC) $(CFLAGS) perfmance.c  $(HEADERS) -o perfmance.x -march=native
-	$(CC) $(CFLAGS) perfmance.c  $(HEADERS) -o mid-perfmance.x -march=native -D OLD
+	$(CC) $(CFLAGS) performance.c  $(HEADERS) -o performance.x -march=native
+	$(CC) $(CFLAGS) performance.c  $(HEADERS) -o mid-performance.x -march=native -D OLD
 
 
 run:
@@ -20,8 +20,8 @@ test:
 	mpiexec -n 1 ./driver.x
 
 perf:
-	perf stat ./perfmance.x 192
-	perf stat ./mid-perfmance.x 192
+	perf stat ./performance.x 192
+	perf stat ./mid-performance.x 192
 
 
 
